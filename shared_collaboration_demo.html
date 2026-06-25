@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shared Collaboration Folder — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F7F5F0;
+  --paper-raised: #FFFFFF;
+  --navy: #1C2B3A;
+  --navy-soft: #3D4F61;
+  --green: #3A6B5C;
+  --green-bg: #E4EDE9;
+  --red: #B0392B;
+  --red-bg: #F5E7E3;
+  --amber: #C9A050;
+  --amber-bg: #FBF3E2;
+  --line: #DAD5C9;
+  --shadow: 0 1px 2px rgba(28,43,58,0.06), 0 4px 12px rgba(28,43,58,0.06);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--navy);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+}
+
+/* ---------- Header ---------- */
+header.hero {
+  margin-bottom: 40px;
+}
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+h1 {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.12;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+.dek {
+  font-size: 16px;
+  color: var(--navy-soft);
+  max-width: 620px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ---------- Role switcher ---------- */
+.role-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 36px 0 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0;
+}
+.role-tab {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  padding: 10px 16px 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--navy-soft);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  position: relative;
+  top: 1px;
+}
+.role-tab:hover { color: var(--navy); }
+.role-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--green);
+  font-weight: 600;
+}
+.role-tab .badge-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 7px;
+  vertical-align: middle;
+}
+
+.role-context {
+  font-size: 13px;
+  color: var(--navy-soft);
+  margin: 14px 0 28px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.role-context strong { color: var(--navy); }
+
+/* ---------- Folder grid ---------- */
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.folder-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.folder-card.visible { border-top: 3px solid var(--green); }
+.folder-card.hidden {
+  border-top: 3px solid var(--red);
+  opacity: 0.55;
+}
+.folder-card.hidden::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg, rgba(176,57,43,0.04) 0 8px, transparent 8px 16px
+  );
+  pointer-events: none;
+}
+.folder-name {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+.folder-status {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+.folder-status.visible { background: var(--green-bg); color: var(--green); }
+.folder-status.hidden { background: var(--red-bg); color: var(--red); }
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.file-item {
+  font-size: 13px;
+  color: var(--navy-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 7px 9px;
+  background: var(--paper);
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.12s, color 0.12s;
+}
+.folder-card.visible .file-item:hover {
+  border-color: var(--green);
+  color: var(--navy);
+}
+.folder-card.hidden .file-item {
+  cursor: not-allowed;
+  color: #B7AFA0;
+}
+.locked-note {
+  font-size: 12px;
+  color: var(--red);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 10px;
+}
+
+/* ---------- File reader modal ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(28,43,58,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--paper-raised);
+  border-radius: 12px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 28px 30px;
+  box-shadow: 0 20px 60px rgba(28,43,58,0.25);
+}
+.modal-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+.modal-body {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--navy);
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 10px;
+}
+.modal-close {
+  float: right;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--navy-soft);
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* ---------- Section divider ---------- */
+.section-divider {
+  margin: 64px 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.section-divider .line { flex: 1; height: 1px; background: var(--line); }
+.section-divider .label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--navy-soft);
+}
+
+/* ---------- Calculator ---------- */
+.calc-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+.calc-intro {
+  font-size: 14px;
+  color: var(--navy-soft);
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+.calc-pickers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+@media (max-width: 640px) {
+  .calc-pickers { grid-template-columns: 1fr; }
+}
+.picker-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--navy-soft);
+  margin-bottom: 8px;
+  display: block;
+}
+select {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--navy);
+  cursor: pointer;
+}
+select:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+
+.score-display {
+  text-align: center;
+  padding: 22px 0 26px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+.score-formula {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--navy-soft);
+  margin-bottom: 8px;
+}
+.score-number {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 700;
+  font-size: 48px;
+  color: var(--green);
+  line-height: 1;
+}
+.score-number .denom { color: var(--navy-soft); font-size: 22px; }
+
+.word-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 640px) {
+  .word-compare { grid-template-columns: 1fr; }
+}
+.word-col-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--navy-soft);
+  margin-bottom: 10px;
+}
+.chip-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 14px;
+  background: #EFEBE0;
+  color: var(--navy-soft);
+  border: 1px solid transparent;
+}
+.chip.shared {
+  background: var(--green-bg);
+  color: var(--green);
+  border-color: var(--green);
+  font-weight: 600;
+}
+
+.shared-row {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+}
+
+/* ---------- Recommendations ---------- */
+.rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rec-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+}
+.rec-case {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.rec-detail {
+  font-size: 13px;
+  color: var(--navy-soft);
+  line-height: 1.5;
+}
+.rec-detail .file-ref {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--navy);
+}
+.rec-score {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green);
+  background: var(--green-bg);
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+footer {
+  margin-top: 64px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--navy-soft);
+}
+
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">DTU Innovation — Working Prototype</div>
+    <h1>Shared Collaboration Folder<br>Doctors ⇄ ALK Pharma Researchers</h1>
+    <p class="dek">A simulated private network with role-based shared folders, plus a live Jaccard-similarity engine that matches patient cases to relevant research and recommends who to contact.</p>
+  </header>
+
+  <div class="role-tabs" id="roleTabs"></div>
+  <div class="role-context" id="roleContext"></div>
+
+  <div class="folder-grid" id="folderGrid"></div>
+
+  <div class="section-divider">
+    <div class="line"></div>
+    <div class="label">Live similarity calculator</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="calc-card">
+    <p class="calc-intro">Pick any two files below. The system breaks each into keywords, finds the words they share, and divides by the total number of distinct words across both — that ratio is the Jaccard similarity score used everywhere in this prototype.</p>
+
+    <div class="calc-pickers">
+      <div>
+        <label class="picker-label">File A</label>
+        <select id="fileA"></select>
+      </div>
+      <div>
+        <label class="picker-label">File B</label>
+        <select id="fileB"></select>
+      </div>
+    </div>
+
+    <div class="score-display">
+      <div class="score-formula" id="scoreFormula">shared keywords ÷ total unique keywords</div>
+      <div class="score-number" id="scoreNumber">—</div>
+    </div>
+
+    <div class="word-compare">
+      <div>
+        <div class="word-col-label" id="labelA">File A keywords</div>
+        <div class="chip-cloud" id="cloudA"></div>
+      </div>
+      <div>
+        <div class="word-col-label" id="labelB">File B keywords</div>
+        <div class="chip-cloud" id="cloudB"></div>
+      </div>
+    </div>
+
+    <div class="shared-row">
+      <div class="word-col-label">Shared keywords (the intersection)</div>
+      <div class="chip-cloud" id="cloudShared"></div>
+    </div>
+  </div>
+
+  <div class="section-divider">
+    <div class="line"></div>
+    <div class="label">Auto-generated recommendations</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="rec-list" id="recList"></div>
+
+  <footer>
+    Prototype simulation — folders, permissions, and similarity scores are computed live in your browser from mock data. No real patient data is used.
+  </footer>
+
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// DATA — mirrors the Python script's MOCK_FILES, PERMISSIONS, FILE_CONTACTS
+// ---------------------------------------------------------------------------
+
+const ROLES = ["Doctor", "R&D Scientist", "Wet Lab Scientist", "ALK Researcher"];
+
+const FOLDERS = [
+  "Doctors",
+  "R&D Scientists",
+  "Wet Lab Scientists",
+  "Doctors and ALK Researchers"
+];
+
+const PERMISSIONS = {
+  "Doctors": ["Doctor"],
+  "R&D Scientists": ["R&D Scientist"],
+  "Wet Lab Scientists": ["Wet Lab Scientist"],
+  "Doctors and ALK Researchers": ["Doctor", "ALK Researcher"]
+};
+
+const MOCK_FILES = {
+  "Doctors": {
+    "patient_case_0451.txt": `PATIENT CASE NOTE — Case #0451
+Attending: Dr. M. Halvorsen
+Diagnosis: Severe peanut allergy (IgE-mediated), confirmed via skin
+prick test and serum-specific IgE panel.
+Notes: Patient has history of anaphylaxis on accidental peanut
+exposure (age 6, age 11). Carries epinephrine auto-injector. Family
+interested in oral immunotherapy options. Requesting information on
+ALK Pharma's investigational peanut OIT product (trial code AX-09)
+for possible enrollment.
+Follow-up: 4 weeks, pending trial eligibility review.`,
+    "patient_case_0452.txt": `PATIENT CASE NOTE — Case #0452
+Attending: Dr. L. Andersen
+Diagnosis: Allergic rhinitis with seasonal exacerbation, suspected
+cross-sensitivity to birch pollen.
+Notes: Symptoms poorly controlled on standard antihistamines.
+Discussed eligibility for ALK Pharma's extended-release antihistamine
+candidate currently in Phase II trials. Awaiting wet lab confirmation
+of histamine receptor binding profile before trial referral.
+Follow-up: pending lab report.`,
+    "patient_case_0453.txt": `PATIENT CASE NOTE — Case #0453
+Attending: Dr. M. Halvorsen
+Diagnosis: Drug allergy — confirmed penicillin hypersensitivity
+(urticaria and angioedema on prior exposure).
+Notes: Patient requires alternative antibiotic regimen for upcoming
+procedure. No cross-reactivity observed with cephalosporins on
+graded challenge. Flagging allergy status in shared record before
+referring to ALK Pharma's drug-allergy desensitization program.
+Follow-up: 1 week, pre-procedure clearance needed.`,
+    "patient_case_0454.txt": `PATIENT CASE NOTE — Case #0454
+Attending: Dr. L. Andersen
+Diagnosis: Chronic urticaria, unknown trigger — environmental and
+food panel both negative; suspected idiopathic or formulation-related
+sensitivity to an inactive excipient in a prior medication.
+Notes: Reaction onset correlated with a generic tablet formulation
+change. Coordinating with ALK Pharma research team to review
+excipient composition of their antihistamine candidate before
+considering it for this patient.
+Follow-up: 2 weeks.`,
+    "weekly_rounds_summary.txt": `WEEKLY ROUNDS SUMMARY
+Several allergy referrals this week (#0451 peanut, #0452 allergic
+rhinitis, #0453 drug allergy, #0454 chronic urticaria). Increasing
+interest in ALK Pharma's pipeline products — both the peanut OIT
+trial and the extended-release antihistamine. Suggest syncing with
+R&D on current trial eligibility criteria and wet lab on receptor
+binding / excipient data turnaround time.`
+  },
+  "R&D Scientists": {
+    "antihistamine_pipeline.txt": `R&D PROJECT LOG — Extended-Release Antihistamine Pipeline
+Lead: S. Okafor (ALK Pharma)
+Status: Compound AX-09 shows strong H1 receptor binding affinity in
+computational modeling. Next step: validate in vitro via wet lab
+receptor-binding assay. Need updated patient response data from
+clinical cases with confirmed allergic rhinitis to correlate efficacy
+predictions.`,
+    "peanut_oit_trial_design.txt": `TRIAL DESIGN NOTES — Peanut Oral Immunotherapy (OIT) Program
+Summary: Phase II dose-escalation protocol for peanut OIT candidate.
+Eligibility requires confirmed IgE-mediated peanut allergy and history
+of anaphylaxis. Clinical correlation needed — request case data from
+Doctors on peanut-allergic patients meeting severity criteria.`,
+    "q3_research_roadmap.txt": `Q3 RESEARCH ROADMAP
+1. Finalize AX-09 antihistamine candidate formulation
+2. Coordinate with wet lab on receptor-binding assay scheduling
+3. Request de-identified case data on severe peanut allergy patients
+4. Draft trial protocol for drug-allergy desensitization program`
+  },
+  "Wet Lab Scientists": {
+    "receptor_binding_assay_ax09.txt": `WET LAB ASSAY REPORT — AX-09 H1 Receptor Binding Assay
+Technician: J. Verbeek
+Result: AX-09 binds H1 histamine receptor at IC50 = 8nM in vitro.
+Minimal cross-reactivity with H2 receptor observed. Forwarding
+results to R&D for pipeline review.`,
+    "excipient_sensitivity_panel.txt": `EXCIPIENT SENSITIVITY PANEL LOG
+Samples tested: formulation batch for AX-09 extended-release tablet.
+Screened against common excipient sensitivities (lactose, certain
+dyes, croscarmellose sodium). No reactivity flags found. Results sent
+to Doctors for review ahead of patient #0454 formulation concerns.`,
+    "protocol_notes_skin_prick_correlation.txt": `PROTOCOL NOTES — Correlating Skin Prick Test Severity with Assay Data
+Standard protocol followed per lab SOP-114. Turnaround time currently
+5 business days. Doctors have requested faster turnaround for
+time-sensitive trial eligibility decisions.`
+  },
+  "Doctors and ALK Researchers": {
+    "trial_eligibility_notes.txt": `SHARED NOTE — ALK Pharma Trial Eligibility Review
+Joint review between Dr. M. Halvorsen (Doctors) and S. Okafor
+(ALK Pharma R&D) on cases #0451 (peanut allergy) and #0452 (allergic
+rhinitis). Both patients meet preliminary eligibility criteria for
+ALK Pharma trials (peanut OIT and AX-09 antihistamine, respectively)
+pending final wet lab confirmation.`,
+    "case_0451_research_linkage.txt": `CASE-RESEARCH LINKAGE NOTE — Patient #0451
+Prepared by: Dr. M. Halvorsen (Doctors), reviewed with S. Okafor
+(ALK Pharma R&D)
+
+Patient: Case #0451, severe peanut allergy (IgE-mediated), prior
+anaphylaxis on accidental exposure (age 6, age 11).
+
+Connection to ALK Pharma research: this patient was originally
+referred for consideration of ALK Pharma's investigational peanut
+oral immunotherapy (OIT) product, trial code AX-09. Reviewing the
+wet lab team's receptor-binding assay results for AX-09 alongside
+this patient's IgE panel suggests AX-09's mechanism is well matched
+to this patient's allergy profile.
+
+Recommendation: flag case #0451 to R&D as a candidate data point for
+evaluating AX-09 beyond its original allergic-rhinitis use case.`,
+    "cross_team_meeting_minutes.txt": `MEETING MINUTES — Doctors / ALK Pharma Researchers Sync
+Attendees: Dr. Halvorsen, S. Okafor, Dr. Andersen
+Discussed: trial design, patient referral pathway, and need for
+faster feedback loop with wet lab on receptor-binding and excipient
+data turnaround. Action item: formalize shared folder structure
+between all three groups.`
+  }
+};
+
+const FILE_CONTACTS = {
+  "antihistamine_pipeline.txt": ["S. Okafor", "R&D Scientist"],
+  "peanut_oit_trial_design.txt": ["S. Okafor", "R&D Scientist"],
+  "q3_research_roadmap.txt": ["S. Okafor", "R&D Scientist"],
+  "receptor_binding_assay_ax09.txt": ["J. Verbeek", "Wet Lab Scientist"],
+  "excipient_sensitivity_panel.txt": ["J. Verbeek", "Wet Lab Scientist"],
+  "protocol_notes_skin_prick_correlation.txt": ["J. Verbeek", "Wet Lab Scientist"]
+};
+
+const STOPWORDS = new Set(["the","and","for","with","from","this","that","are","was",
+  "has","have","been","all","our","case","notes","note","to","of","on","in","a","is",
+  "at","per","via","by"]);
+
+// ---------------------------------------------------------------------------
+// CORE LOGIC — mirrors the Python script's extract_keywords / Jaccard
+// ---------------------------------------------------------------------------
+
+function extractKeywords(text) {
+  const matches = text.toLowerCase().match(/[a-z][a-z\-]{3,}/g) || [];
+  return new Set(matches.filter(w => !STOPWORDS.has(w)));
+}
+
+function jaccard(setA, setB) {
+  const shared = new Set([...setA].filter(w => setB.has(w)));
+  const union = new Set([...setA, ...setB]);
+  return { score: union.size ? shared.size / union.size : 0, shared, union };
+}
+
+function allFilesFlat() {
+  const out = [];
+  for (const folder of FOLDERS) {
+    for (const fname of Object.keys(MOCK_FILES[folder])) {
+      out.push({ folder, fname });
+    }
+  }
+  return out;
+}
+
+function extractCaseId(text) {
+  const m = text.match(/#(\d{4})/);
+  return m ? m[1] : null;
+}
+
+function extractTag(text) {
+  let m = text.match(/\b([A-Z]{2,4}-\d{2,4})\b/);
+  if (m) return m[1];
+  m = text.match(/\b(peanut OIT|antihistamine|excipient|binding assay)\b/i);
+  return m ? m[1] : "this research";
+}
+
+function generateRecommendations() {
+  const docFiles = MOCK_FILES["Doctors"];
+  const candidateFolders = ["R&D Scientists", "Wet Lab Scientists"];
+  const recs = [];
+
+  for (const [caseFile, caseText] of Object.entries(docFiles)) {
+    if (caseFile.includes("weekly_rounds")) continue;
+    let best = null;
+    for (const folder of candidateFolders) {
+      for (const [fname, ftext] of Object.entries(MOCK_FILES[folder])) {
+        const kwA = extractKeywords(caseText);
+        const kwB = extractKeywords(ftext);
+        const { score } = jaccard(kwA, kwB);
+        if (!best || score > best.score) {
+          best = { score, folder, fname, ftext };
+        }
+      }
+    }
+    if (best && best.score >= 0.05) {
+      const caseId = extractCaseId(caseText);
+      const [contactName, contactRole] = FILE_CONTACTS[best.fname] || ["the relevant team", best.folder];
+      const tag = extractTag(best.ftext);
+      recs.push({
+        caseId, caseFile, score: best.score, folder: best.folder,
+        fname: best.fname, contactName, contactRole, tag
+      });
+    }
+  }
+  return recs.sort((a, b) => b.score - a.score);
+}
+
+// ---------------------------------------------------------------------------
+// RENDER — role tabs + folder grid
+// ---------------------------------------------------------------------------
+
+let currentRole = ROLES[0];
+
+function renderRoleTabs() {
+  const el = document.getElementById("roleTabs");
+  el.innerHTML = ROLES.map(role => `
+    <button class="role-tab ${role === currentRole ? 'active' : ''}" data-role="${role}">
+      <span class="badge-dot"></span>${role}
+    </button>
+  `).join("");
+  el.querySelectorAll(".role-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentRole = btn.dataset.role;
+      renderRoleTabs();
+      renderFolderGrid();
+      renderRoleContext();
+    });
+  });
+}
+
+function renderRoleContext() {
+  const visibleFolders = FOLDERS.filter(f => PERMISSIONS[f].includes(currentRole));
+  document.getElementById("roleContext").innerHTML =
+    `Viewing as <strong>${currentRole}</strong> — access to <strong>${visibleFolders.length} of ${FOLDERS.length}</strong> folders: ${visibleFolders.join(", ")}`;
+}
+
+function renderFolderGrid() {
+  const grid = document.getElementById("folderGrid");
+  grid.innerHTML = FOLDERS.map(folder => {
+    const allowed = PERMISSIONS[folder].includes(currentRole);
+    const files = Object.keys(MOCK_FILES[folder]);
+    return `
+      <div class="folder-card ${allowed ? 'visible' : 'hidden'}">
+        <div class="folder-status ${allowed ? 'visible' : 'hidden'}">${allowed ? 'Access granted' : 'No access'}</div>
+        <div class="folder-name">${folder}</div>
+        <ul class="file-list">
+          ${files.map(f => `
+            <li class="file-item" data-folder="${folder}" data-file="${f}" ${allowed ? '' : 'aria-disabled="true"'}>${f}</li>
+          `).join("")}
+        </ul>
+        ${allowed ? '' : `<div class="locked-note">Restricted to: ${PERMISSIONS[folder].join(", ")}</div>`}
+      </div>
+    `;
+  }).join("");
+
+  grid.querySelectorAll(".folder-card.visible .file-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const folder = item.dataset.folder;
+      const fname = item.dataset.file;
+      openModal(fname, MOCK_FILES[folder][fname]);
+    });
+  });
+}
+
+function openModal(title, body) {
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("modalBody").textContent = body;
+  document.getElementById("modalBackdrop").classList.add("open");
+}
+document.getElementById("modalClose").addEventListener("click", () => {
+  document.getElementById("modalBackdrop").classList.remove("open");
+});
+document.getElementById("modalBackdrop").addEventListener("click", (e) => {
+  if (e.target.id === "modalBackdrop") e.target.classList.remove("open");
+});
+
+// ---------------------------------------------------------------------------
+// RENDER — similarity calculator
+// ---------------------------------------------------------------------------
+
+function populateFilePickers() {
+  const files = allFilesFlat();
+  const optionsHtml = files.map((f, i) =>
+    `<option value="${i}">${f.fname} (${f.folder})</option>`
+  ).join("");
+  document.getElementById("fileA").innerHTML = optionsHtml;
+  document.getElementById("fileB").innerHTML = optionsHtml;
+
+  // sensible defaults: case 0451 vs peanut OIT trial design
+  const idxA = files.findIndex(f => f.fname === "patient_case_0451.txt");
+  const idxB = files.findIndex(f => f.fname === "peanut_oit_trial_design.txt");
+  document.getElementById("fileA").value = idxA >= 0 ? idxA : 0;
+  document.getElementById("fileB").value = idxB >= 0 ? idxB : 1;
+}
+
+function renderChips(container, words, sharedSet) {
+  container.innerHTML = [...words].sort().map(w =>
+    `<span class="chip ${sharedSet.has(w) ? 'shared' : ''}">${w}</span>`
+  ).join("");
+}
+
+function updateCalculator() {
+  const files = allFilesFlat();
+  const fa = files[parseInt(document.getElementById("fileA").value)];
+  const fb = files[parseInt(document.getElementById("fileB").value)];
+
+  const textA = MOCK_FILES[fa.folder][fa.fname];
+  const textB = MOCK_FILES[fb.folder][fb.fname];
+  const kwA = extractKeywords(textA);
+  const kwB = extractKeywords(textB);
+  const { score, shared, union } = jaccard(kwA, kwB);
+
+  document.getElementById("labelA").textContent = `${fa.fname} keywords (${kwA.size})`;
+  document.getElementById("labelB").textContent = `${fb.fname} keywords (${kwB.size})`;
+  document.getElementById("scoreFormula").innerHTML =
+    `${shared.size} shared ÷ ${union.size} unique`;
+  document.getElementById("scoreNumber").innerHTML =
+    score.toFixed(3);
+
+  renderChips(document.getElementById("cloudA"), kwA, shared);
+  renderChips(document.getElementById("cloudB"), kwB, shared);
+  renderChips(document.getElementById("cloudShared"), shared, shared);
+}
+
+document.getElementById("fileA").addEventListener("change", updateCalculator);
+document.getElementById("fileB").addEventListener("change", updateCalculator);
+
+// ---------------------------------------------------------------------------
+// RENDER — recommendations
+// ---------------------------------------------------------------------------
+
+function renderRecommendations() {
+  const recs = generateRecommendations();
+  document.getElementById("recList").innerHTML = recs.map(r => `
+    <div class="rec-row">
+      <div class="rec-case">Case #${r.caseId}</div>
+      <div class="rec-detail">
+        Best match: <span class="file-ref">${r.fname}</span> (${r.folder}) —
+        recommend contacting <strong>${r.contactName}</strong> (${r.contactRole}) about <strong>${r.tag}</strong> research.
+      </div>
+      <div class="rec-score">${r.score.toFixed(2)}</div>
+    </div>
+  `).join("");
+}
+
+// ---------------------------------------------------------------------------
+// INIT
+// ---------------------------------------------------------------------------
+
+renderRoleTabs();
+renderRoleContext();
+renderFolderGrid();
+populateFilePickers();
+updateCalculator();
+renderRecommendations();
+</script>
+
+</body>
+</html>
